@@ -1,0 +1,74 @@
+services:
+  backend:
+    build: ./backend
+    ports: ["8000:8000"]
+    volumes:
+      - storage_data:/app/storage
+      - ./backend/plugins:/app/plugins
+    environment: &backend-env
+      DATABASE_URL: postgresql+asyncpg://doc2json:secret@postgres:5432/doc2json
+      REDIS_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/1
+      LLM_API_URL: http://host.docker.internal:11434/v1
+      LLM_API_KEY: "token-abc"
+      LLM_MODEL_NAME: "gpt-oss:20b-new"
+      OCR_VL_BACKEND: "vllm-server"
+      OCR_VL_SERVER_URL: http://host.docker.internal:8118/v1
+      OCR_VL_MODEL_NAME: "PaddleOCR-VL-0.9B"
+      SECRET_KEY: "random-secret-key-change-in-production"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  celery-worker:
+    build: ./backend
+    command: >
+      celery -A app.processing.celery_app worker
+      --loglevel=info
+      --concurrency=2
+      --max-tasks-per-child=50
+    volumes:
+      - storage_data:/app/storage
+      - ./backend/plugins:/app/plugins
+    environment:
+      <<: *backend-env
+    deploy:
+      resources:
+        limits:
+          memory: 8G
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  frontend:
+    build: ./frontend
+    ports: ["80:80"]
+    depends_on:
+      - backend
+
+  postgres:
+    image: postgres:16-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: doc2json
+      POSTGRES_USER: doc2json
+      POSTGRES_PASSWORD: secret
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U doc2json"]
+      interval: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    volumes:
+      - redis_data:/data
+
+volumes:
+  postgres_data:
+  redis_data:
+  storage_data:
