@@ -19,7 +19,7 @@ RUN find /usr/local/lib -name "base.py" \
 
 COPY . .
 
-RUN mkdir -p /app/storage /app/plugins
+RUN mkdir -p /app/storage /app/plugins /app/models
 
 ENV PYTHONPATH=/app
 

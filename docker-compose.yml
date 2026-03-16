@@ -5,6 +5,7 @@ services:
     volumes:
       - storage_data:/app/storage
       - ./backend/plugins:/app/plugins
+      - ./backend/models:/app/models
     environment: &backend-env
       DATABASE_URL: postgresql+asyncpg://doc2json:secret@postgres:5432/doc2json
       REDIS_URL: redis://redis:6379/0
@@ -32,6 +33,7 @@ services:
     volumes:
       - storage_data:/app/storage
       - ./backend/plugins:/app/plugins
+      - ./backend/models:/app/models
     environment:
       <<: *backend-env
     deploy:
