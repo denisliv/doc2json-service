@@ -1,13 +1,13 @@
 const Router = {
     routes: {
-        '/login': { render: LoginPage.render, public: true },
-        '/dashboard': { render: DashboardPage.render },
-        '/upload': { render: UploadPage.render },
-        '/jobs': { render: JobsPage.render },
-        '/jobs/:id': { render: JobDetailPage.render },
-        '/doc-types': { render: DocTypesPage.render },
-        '/doc-types/:slug': { render: DocTypeEditorPage.render },
-        '/users': { render: UsersPage.render },
+        '/login': { render: (c, p) => LoginPage.render(c, p), public: true },
+        '/dashboard': { render: (c, p) => DashboardPage.render(c, p) },
+        '/upload': { render: (c, p) => UploadPage.render(c, p) },
+        '/jobs': { render: (c, p) => JobsPage.render(c, p) },
+        '/jobs/:id': { render: (c, p) => JobDetailPage.render(c, p) },
+        '/doc-types': { render: (c, p) => DocTypesPage.render(c, p) },
+        '/doc-types/:slug': { render: (c, p) => DocTypeEditorPage.render(c, p) },
+        '/users': { render: (c, p) => UsersPage.render(c, p) },
     },
 
     async init() {

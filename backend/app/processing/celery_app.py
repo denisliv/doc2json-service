@@ -6,6 +6,7 @@ celery_app = Celery(
     "doc2json",
     broker=os.environ.get("REDIS_URL", "redis://redis:6379/0"),
     backend=os.environ.get("CELERY_RESULT_BACKEND", "redis://redis:6379/1"),
+    include=["app.processing.tasks"],
 )
 
 celery_app.conf.update(

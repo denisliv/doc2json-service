@@ -21,5 +21,3 @@ celery-worker-1  |   File "/usr/local/lib/python3.12/site-packages/celery/worker
 celery-worker-1  |     strategy = strategies[type_]
 celery-worker-1  |                ~~~~~~~~~~^^^^^^^
 celery-worker-1  | KeyError: 'app.processing.tasks.process_job'
-
-this._load is not a function
