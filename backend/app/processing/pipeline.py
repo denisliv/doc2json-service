@@ -8,10 +8,11 @@ from pathlib import Path
 
 import jsonschema
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import selectinload
 
 from app.config import settings
-from app.database import async_session_factory
+import app.auth.models  # noqa: F401 — register User table for FK resolution
 from app.document_types.models import DocumentType
 from app.documents.models import Job, JobFile
 from app.processing.llm_service import LLMService
@@ -30,7 +31,19 @@ def run_pipeline(job_id: str) -> None:
 async def _run_pipeline_async(job_id: str) -> None:
     start_time = time.time()
 
-    async with async_session_factory() as session:
+    engine = create_async_engine(settings.DATABASE_URL, pool_pre_ping=True)
+    session_factory = async_sessionmaker(engine, expire_on_commit=False)
+
+    try:
+        await _execute_pipeline(session_factory, job_id, start_time)
+    finally:
+        await engine.dispose()
+
+
+async def _execute_pipeline(
+    session_factory: async_sessionmaker[AsyncSession], job_id: str, start_time: float
+) -> None:
+    async with session_factory() as session:
         result = await session.execute(
             select(Job).options(selectinload(Job.files)).where(Job.id == job_id)
         )
