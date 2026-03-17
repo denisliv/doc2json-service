@@ -1,14 +1,19 @@
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class DocumentTypeCreate(BaseModel):
     slug: str
     name: str
     description: str | None = None
-    json_schema: dict
+    json_schema: dict = Field(
+        ...,
+        description="Full JSON Schema (e.g. Draft 2020-12) for the extracted document. "
+        "Define structure, types, and a 'description' for each key so the LLM and validation use the same shape. "
+        "Supports nested objects and arbitrary depth.",
+    )
     system_prompt: str
     user_prompt: str
     router_hints: str | None = None
@@ -19,7 +24,10 @@ class DocumentTypeCreate(BaseModel):
 class DocumentTypeUpdate(BaseModel):
     name: str | None = None
     description: str | None = None
-    json_schema: dict | None = None
+    json_schema: dict | None = Field(
+        None,
+        description="Full JSON Schema for the document. Use 'properties' and 'description' per key for structure and semantics.",
+    )
     system_prompt: str | None = None
     user_prompt: str | None = None
     router_hints: str | None = None

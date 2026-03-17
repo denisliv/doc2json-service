@@ -9,7 +9,12 @@ from langchain_openai import ChatOpenAI
 from tenacity import retry, stop_after_attempt, wait_fixed
 
 from app.config import settings
-from app.processing.prompt_builder import build_extraction_messages, build_router_messages
+from app.processing.prompt_builder import (
+    FIX_JSON_SYSTEM_PROMPT,
+    FIX_JSON_USER_PROMPT,
+    build_extraction_messages,
+    build_router_messages,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -59,14 +64,8 @@ class LLMService:
         """Attempt to repair invalid JSON using LLM."""
         format_instructions = json.dumps(schema, ensure_ascii=False, indent=2)
         fix_template = ChatPromptTemplate.from_messages([
-            ("system",
-             "Ты — эксперт по данным. Исправь текст так, чтобы он стал ВАЛИДНЫМ JSON, "
-             "строго соответствующим схеме.\n\nСхема:\n{format_instructions}\n\n"
-             "Ошибка парсинга:\n{error_message}\n\nВАЖНО:\n"
-             "1. Верни ТОЛЬКО чистый JSON без ```обёрток, комментариев или пояснений.\n"
-             "2. Не добавляй полей, которых нет в схеме.\n"
-             "3. Сохраняй типы данных (числа — без кавычек, строки — в двойных кавычках)."),
-            ("user", "Исходный текст:\n{broken_json_text}"),
+            ("system", FIX_JSON_SYSTEM_PROMPT),
+            ("user", FIX_JSON_USER_PROMPT),
         ])
 
         current_text = broken

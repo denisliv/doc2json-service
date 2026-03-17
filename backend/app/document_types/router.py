@@ -58,7 +58,13 @@ async def get_type(
     return dt
 
 
-@router.post("", response_model=DocumentTypeResponse, status_code=201)
+@router.post(
+    "",
+    response_model=DocumentTypeResponse,
+    status_code=201,
+    summary="Create document type",
+    description="Create a new document type. Provide a full JSON Schema in `json_schema`: define `type`, `properties`, and `description` for each key (and nested keys) so the LLM and validation use the same structure.",
+)
 async def create_type(
     body: DocumentTypeCreate,
     user: User = Depends(require_role("admin")),
@@ -70,7 +76,12 @@ async def create_type(
     return await create_document_type(db, body, user.id)
 
 
-@router.put("/{slug}", response_model=DocumentTypeResponse)
+@router.put(
+    "/{slug}",
+    response_model=DocumentTypeResponse,
+    summary="Update document type",
+    description="Update a document type. You can set a full JSON Schema with structure and descriptions for each key.",
+)
 async def update_type(
     slug: str,
     body: DocumentTypeUpdate,

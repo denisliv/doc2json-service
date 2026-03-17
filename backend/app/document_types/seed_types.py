@@ -1,5 +1,10 @@
 """Built-in document types seeded on first startup."""
 
+from app.document_types.extraction_models import (
+    get_accounting_statements_json_schema,
+    get_official_request_json_schema,
+)
+
 ACCOUNTING_STATEMENTS_SYSTEM_PROMPT = """Ты — эксперт в извлечении структурированных финансовых данных из форм бухгалтерской отчётности в Markdown формате.
 Твоя задача — преобразовать текстовое (табличное) описание в строго валидный JSON формата AccountingStatementModel:
 
@@ -103,138 +108,9 @@ OFFICIAL_REQUEST_USER_PROMPT = """Проанализируй следующий 
 
 {report}"""
 
-# JSON Schemas generated from existing Pydantic models (model_json_schema())
-ACCOUNTING_STATEMENTS_SCHEMA = {
-    "type": "object",
-    "required": ["tables_data"],
-    "properties": {
-        "tables_data": {
-            "type": "object",
-            "required": [
-                "balance_head_table",
-                "balance_dates_table",
-                "balance_main_table_dates",
-                "balance_main_table",
-                "report_main_table",
-            ],
-            "properties": {
-                "balance_head_table": {
-                    "type": "object",
-                    "properties": {
-                        "Организация": {"type": ["string", "null"]},
-                        "Учетный номер плательщика": {"type": ["integer", "null"]},
-                        "Вид экономической деятельности": {"type": ["string", "null"]},
-                        "Организационно-правовая форма": {"type": ["string", "null"]},
-                        "Орган управления": {"type": ["string", "null"]},
-                        "Единица измерения": {"type": ["string", "null"]},
-                        "Адрес": {"type": ["string", "null"]},
-                    },
-                },
-                "balance_dates_table": {
-                    "type": "object",
-                    "properties": {
-                        "Дата утверждения": {"type": ["string", "null"]},
-                        "Дата отправки": {"type": ["string", "null"]},
-                        "Дата принятия": {"type": ["string", "null"]},
-                    },
-                },
-                "balance_main_table_dates": {
-                    "type": "array",
-                    "items": {"type": ["string", "null"]},
-                    "description": "Даты двух столбцов основной таблицы баланса в формате ДД.ММ.ГГГГ",
-                },
-                "balance_main_table": {
-                    "type": "object",
-                    "description": "Коды строк баланса -> массивы из двух значений [newer, older]",
-                    "additionalProperties": {
-                        "type": "array",
-                        "items": {"type": ["integer", "null"]},
-                        "minItems": 2,
-                        "maxItems": 2,
-                    },
-                },
-                "report_main_table": {
-                    "type": "object",
-                    "description": "Коды строк отчёта о прибылях и убытках -> массивы из двух значений",
-                    "additionalProperties": {
-                        "type": "array",
-                        "items": {"type": ["integer", "null"]},
-                        "minItems": 2,
-                        "maxItems": 2,
-                    },
-                },
-            },
-        }
-    },
-}
-
-OFFICIAL_REQUEST_SCHEMA = {
-    "type": "object",
-    "properties": {
-        "sender": {"type": ["string", "null"]},
-        "dateNumber": {"type": ["string", "null"]},
-        "title": {"type": ["string", "null"]},
-        "deadline": {"type": ["string", "null"]},
-        "auditorName": {"type": ["string", "null"]},
-        "email": {"type": ["string", "null"]},
-        "period": {"type": ["string", "null"]},
-        "requestType": {"type": ["string", "null"]},
-        "adress": {"type": ["string", "null"]},
-        "adress_sender": {"type": ["string", "null"]},
-        "podpisant": {"type": ["string", "null"]},
-        "law": {"type": ["string", "null"]},
-        "fizik": {
-            "type": "array",
-            "items": {
-                "type": "object",
-                "properties": {
-                    "fullName": {"type": ["string", "null"]},
-                    "identificationNumber": {"type": ["string", "null"]},
-                    "seriesNumber": {"type": ["string", "null"]},
-                    "government": {"type": ["string", "null"]},
-                    "dateIssue": {"type": ["string", "null"]},
-                    "registrationAddress": {"type": ["string", "null"]},
-                    "dateBirth": {"type": ["string", "null"]},
-                    "mobileNumber": {"type": ["string", "null"]},
-                },
-            },
-        },
-        "urik": {
-            "type": "array",
-            "items": {
-                "type": "object",
-                "properties": {
-                    "nameOrganization": {"type": ["string", "null"]},
-                    "unp": {"type": ["string", "null"]},
-                },
-            },
-        },
-        "bills": {"type": "object"},
-        "transactions": {"type": "object"},
-        "leftovers": {"type": ["string", "null"]},
-        "cards": {"type": "object"},
-        "credit": {"type": "object"},
-        "garantii": {"type": "object"},
-        "deposit": {"type": "object"},
-        "informationSecurities": {"type": ["string", "null"]},
-        "informationMetals": {"type": ["string", "null"]},
-        "informationOwn": {"type": ["string", "null"]},
-        "informationWallet": {"type": ["string", "null"]},
-        "inoe": {"type": ["string", "null"]},
-        "broni": {"type": ["string", "null"]},
-        "ais": {"type": "object"},
-        "arest": {"type": "object"},
-        "sdbo": {"type": "object"},
-        "customerInformation": {"type": "object"},
-        "videoInformation": {"type": ["string", "null"]},
-        "informationErip": {"type": ["string", "null"]},
-        "other": {"type": ["string", "null"]},
-        "sud": {"type": ["string", "null"]},
-        "doverennost": {"type": ["string", "null"]},
-        "closeForm": {"type": ["string", "null"]},
-    },
-}
-
+# JSON Schemas: full structure and descriptions from Pydantic extraction models (Doc2JSON-aligned)
+ACCOUNTING_STATEMENTS_SCHEMA = get_accounting_statements_json_schema()
+OFFICIAL_REQUEST_SCHEMA = get_official_request_json_schema()
 
 BUILTIN_TYPES = [
     {

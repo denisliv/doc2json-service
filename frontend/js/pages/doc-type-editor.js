@@ -71,6 +71,7 @@ const DocTypeEditorPage = {
                 <div class="card mb-4">
                     <h3 class="mb-4">JSON Schema</h3>
                     <textarea id="dt-schema" class="form-control" style="min-height:200px">${dt ? JSON.stringify(dt.json_schema, null, 2) : '{}'}</textarea>
+                    <p class="text-sm text-muted mt-2">Полная JSON Schema: задайте структуру (<code>type</code>, <code>properties</code>) и описание (<code>description</code>) для каждого ключа и вложенных объектов. Схема используется для подсказок LLM и валидации результата.</p>
                 </div>
 
                 <div class="grid grid-2 mb-4">

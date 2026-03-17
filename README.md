@@ -49,6 +49,9 @@ docker compose exec backend python create_admin.py admin changeme "Administrator
 ### Типы документов
 - `GET /api/v1/document-types` — список типов
 - `POST /api/v1/document-types` — создать новый тип (admin)
+- `PUT /api/v1/document-types/{slug}` — обновить тип (admin)
+
+При создании/обновлении типа поле `json_schema` принимает **полную JSON Schema** (например, Draft 2020-12): можно задать структуру (`type`, `properties`), описание (`description`) для каждого ключа и вложенных объектов. Схема используется для подсказок LLM и валидации извлечённого JSON.
 
 ## Роли
 
