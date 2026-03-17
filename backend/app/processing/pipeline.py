@@ -15,6 +15,7 @@ from app.config import settings
 import app.auth.models  # noqa: F401 — register User table for FK resolution
 from app.document_types.models import DocumentType
 from app.documents.models import Job, JobFile
+from app.processing.json_utils import normalize_json_keys
 from app.processing.llm_service import LLMService
 from app.processing.ocr_service import OCRService
 from app.processing.postprocessing import apply_postprocessors
@@ -118,6 +119,9 @@ async def _execute_pipeline(
 
             llm = LLMService()
             extracted = llm.extract(markdown, doc_type_dict)
+
+            # 4b. Нормализация порядка ключей по схеме (accounting_statements.py и др.)
+            extracted = normalize_json_keys(extracted, doc_type_dict["slug"])
 
             # 5. JSON postprocessing
             if doc_type_dict.get("json_postprocessors"):

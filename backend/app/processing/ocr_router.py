@@ -10,6 +10,7 @@ from sqlalchemy import select
 
 from app.database import async_session_factory
 from app.document_types.models import DocumentType
+from app.processing.json_utils import normalize_json_keys
 from app.processing.llm_service import LLMService
 from app.processing.ocr_service import OCRService
 from app.processing.postprocessing import apply_postprocessors
@@ -110,6 +111,7 @@ async def extract_json(
         # 4. Extraction
         llm = LLMService()
         extracted = llm.extract(markdown, doc_type_dict)
+        extracted = normalize_json_keys(extracted, doc_type_dict["slug"])
 
         # 5. JSON postprocessing
         if doc_type_dict.get("json_postprocessors"):

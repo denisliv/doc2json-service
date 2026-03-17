@@ -128,6 +128,7 @@ async def test_type(
 
     start = time.time()
     try:
+        from app.processing.json_utils import normalize_json_keys
         from app.processing.llm_service import LLMService
         from app.processing.postprocessing import apply_postprocessors
 
@@ -148,6 +149,7 @@ async def test_type(
 
         llm = LLMService()
         extracted = llm.extract(markdown, doc_type_dict)
+        extracted = normalize_json_keys(extracted, doc_type_dict["slug"])
 
         if doc_type_dict["json_postprocessors"]:
             extracted = apply_postprocessors(doc_type_dict["json_postprocessors"], extracted, context)
