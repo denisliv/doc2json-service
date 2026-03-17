@@ -1,1 +1,0 @@
-celery-worker-1  | [2026-03-17 09:23:35,662: WARNING/ForkPoolWorker-2] JSON repair attempt 3 failed: Expecting ',' delimiter: line 1 column 2225 (char 2224)

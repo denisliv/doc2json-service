@@ -4,16 +4,17 @@ import tempfile
 import time
 from pathlib import Path
 
-import jsonschema
 from fastapi import APIRouter, File, Form, UploadFile
 from sqlalchemy import select
 
 from app.database import async_session_factory
 from app.document_types.models import DocumentType
+from app.document_types.service import document_type_to_dict
 from app.processing.json_utils import normalize_json_keys
 from app.processing.llm_service import LLMService
 from app.processing.ocr_service import OCRService
 from app.processing.postprocessing import apply_postprocessors
+from app.validation.service import validate_json
 
 router = APIRouter()
 
@@ -74,14 +75,14 @@ async def extract_json(
                 )
                 dt = result.scalar_one_or_none()
                 if dt:
-                    doc_type_dict = _dt_to_dict(dt)
+                    doc_type_dict = document_type_to_dict(dt)
                     detected_slug = dt.slug
 
             if doc_type_dict is None:
                 active_result = await session.execute(
                     select(DocumentType).where(DocumentType.is_active.is_(True))
                 )
-                active_types = [_dt_to_dict(dt) for dt in active_result.scalars().all()]
+                active_types = [document_type_to_dict(dt) for dt in active_result.scalars().all()]
                 llm = LLMService()
                 detected_slug = llm.route(markdown, active_types)
 
@@ -91,7 +92,7 @@ async def extract_json(
                     )
                     dt = dt_result.scalar_one_or_none()
                     if dt:
-                        doc_type_dict = _dt_to_dict(dt)
+                        doc_type_dict = document_type_to_dict(dt)
 
         if doc_type_dict is None:
             elapsed = int((time.time() - start) * 1000)
@@ -99,6 +100,7 @@ async def extract_json(
                 "detected_type": detected_slug or "other",
                 "is_valid": False,
                 "extracted_json": {"error": "Document type not recognized"},
+                "validation_errors": None,
                 "processing_time_ms": elapsed,
             }
 
@@ -118,35 +120,16 @@ async def extract_json(
             extracted = apply_postprocessors(doc_type_dict["json_postprocessors"], extracted, context)
 
         # 6. Validation
-        errors = []
-        validator = jsonschema.Draft202012Validator(doc_type_dict["json_schema"])
-        for err in validator.iter_errors(extracted):
-            errors.append({
-                "path": ".".join(str(p) for p in err.absolute_path) or "$",
-                "message": err.message,
-            })
+        errors = validate_json(extracted, doc_type_dict["json_schema"])
 
         elapsed = int((time.time() - start) * 1000)
         return {
             "detected_type": detected_slug,
             "is_valid": len(errors) == 0,
             "extracted_json": extracted,
+            "validation_errors": errors if errors else None,
             "processing_time_ms": elapsed,
         }
     finally:
         for p in temp_paths:
             Path(p).unlink(missing_ok=True)
-
-
-def _dt_to_dict(dt: DocumentType) -> dict:
-    return {
-        "slug": dt.slug,
-        "name": dt.name,
-        "description": dt.description,
-        "json_schema": dt.json_schema,
-        "system_prompt": dt.system_prompt,
-        "user_prompt": dt.user_prompt,
-        "router_hints": dt.router_hints,
-        "markdown_postprocessors": dt.markdown_postprocessors or [],
-        "json_postprocessors": dt.json_postprocessors or [],
-    }

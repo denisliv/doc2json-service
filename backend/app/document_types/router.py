@@ -3,8 +3,6 @@ import time
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-import jsonschema
-
 from app.auth.dependencies import get_current_user, require_role
 from app.auth.models import User
 from app.common.exceptions import BadRequestError, ConflictError, NotFoundError
@@ -22,12 +20,14 @@ from app.document_types.schemas import (
 from app.document_types.service import (
     create_document_type,
     deactivate_document_type,
+    document_type_to_dict,
     get_document_type,
     get_versions,
     list_document_types,
     update_document_type,
 )
 from app.processing.postprocessing import list_available_plugins
+from app.validation.service import validate_json
 
 router = APIRouter()
 
@@ -132,15 +132,7 @@ async def test_type(
         from app.processing.llm_service import LLMService
         from app.processing.postprocessing import apply_postprocessors
 
-        doc_type_dict = {
-            "slug": dt.slug,
-            "name": dt.name,
-            "json_schema": dt.json_schema,
-            "system_prompt": dt.system_prompt,
-            "user_prompt": dt.user_prompt,
-            "markdown_postprocessors": dt.markdown_postprocessors or [],
-            "json_postprocessors": dt.json_postprocessors or [],
-        }
+        doc_type_dict = document_type_to_dict(dt)
 
         markdown = body.sample_text
         context = {"document_type_slug": dt.slug, "job_id": "test"}
@@ -154,13 +146,7 @@ async def test_type(
         if doc_type_dict["json_postprocessors"]:
             extracted = apply_postprocessors(doc_type_dict["json_postprocessors"], extracted, context)
 
-        errors = []
-        validator = jsonschema.Draft202012Validator(dt.json_schema)
-        for err in validator.iter_errors(extracted):
-            errors.append({
-                "path": ".".join(str(p) for p in err.absolute_path) or "$",
-                "message": err.message,
-            })
+        errors = validate_json(extracted, dt.json_schema)
 
         elapsed = int((time.time() - start) * 1000)
         return TestPromptResponse(

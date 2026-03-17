@@ -9,6 +9,21 @@ from app.document_types.models import DocumentType, DocumentTypeVersion
 from app.document_types.schemas import DocumentTypeCreate, DocumentTypeUpdate
 
 
+def document_type_to_dict(dt: DocumentType) -> dict:
+    """Convert DocumentType ORM instance to dict for pipeline/LLM usage."""
+    return {
+        "slug": dt.slug,
+        "name": dt.name,
+        "description": dt.description,
+        "json_schema": dt.json_schema,
+        "system_prompt": dt.system_prompt,
+        "user_prompt": dt.user_prompt,
+        "router_hints": dt.router_hints,
+        "markdown_postprocessors": dt.markdown_postprocessors or [],
+        "json_postprocessors": dt.json_postprocessors or [],
+    }
+
+
 async def list_document_types(db: AsyncSession, include_inactive: bool = False) -> list[DocumentType]:
     query = select(DocumentType).order_by(DocumentType.name)
     if not include_inactive:
