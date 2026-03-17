@@ -2,6 +2,8 @@ services:
   backend:
     build: ./backend
     ports: ["8000:8000"]
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     volumes:
       - storage_data:/app/storage
       - ./backend/plugins:/app/plugins
@@ -25,6 +27,8 @@ services:
 
   celery-worker:
     build: ./backend
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     command: >
       celery -A app.processing.celery_app worker
       --loglevel=info
