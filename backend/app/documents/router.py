@@ -12,6 +12,7 @@ from app.common.exceptions import NotFoundError
 from app.database import get_db
 from app.documents.schemas import JobListResponse, JobResponse, JobFileResponse, UploadResponse
 from app.documents.service import create_job, delete_job, get_job, list_jobs, retry_job
+from app.processing.json_utils import normalize_json_keys
 
 router = APIRouter()
 
@@ -70,7 +71,10 @@ async def get_job_result(
     job = await get_job(db, job_id)
     if not job:
         raise NotFoundError("Job not found")
-    return JSONResponse(content=job.extracted_json or {})
+    extracted = job.extracted_json or {}
+    if extracted and job.detected_type_slug:
+        extracted = normalize_json_keys(extracted, job.detected_type_slug)
+    return JSONResponse(content=extracted)
 
 
 @router.get("/jobs/{job_id}/markdown")
@@ -129,13 +133,17 @@ async def delete_job_endpoint(
 
 
 def _job_to_response(job) -> JobResponse:
+    # JSONB в PostgreSQL не сохраняет порядок ключей — восстанавливаем при отдаче в API
+    extracted = job.extracted_json
+    if extracted and job.detected_type_slug:
+        extracted = normalize_json_keys(extracted, job.detected_type_slug)
     return JobResponse(
         id=job.id,
         status=job.status,
         detected_type=job.detected_type_slug,
         is_valid=job.is_valid,
         validation_errors=job.validation_errors,
-        extracted_json=job.extracted_json,
+        extracted_json=extracted,
         error_message=job.error_message,
         files=[
             JobFileResponse(id=f.id, name=f.original_name, size=f.file_size)

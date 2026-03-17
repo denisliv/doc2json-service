@@ -33,6 +33,15 @@ def _simple_html_table_to_markdown(table) -> str:
     return "\n".join(lines)
 
 
+def _markdown_texts_to_string(md) -> str:
+    """Приводит markdown_texts к строке. Может быть str или list[str] (по страницам)."""
+    if isinstance(md, str):
+        return md
+    if isinstance(md, list):
+        return "\n".join(str(x) for x in md if x is not None)
+    return str(md) if md is not None else ""
+
+
 def html_to_markdown_with_tables(html: str) -> str:
     soup = BeautifulSoup(html, "html.parser")
     output = []
@@ -91,7 +100,8 @@ class OCRService:
                 result = ocr.restructure_pages(
                     pages, merge_tables=True, relevel_titles=True, concatenate_pages=True
                 )
-                all_markdown.append(result[0].markdown["markdown_texts"])
+                md_raw = result[0].markdown.get("markdown_texts", "")
+                all_markdown.append(_markdown_texts_to_string(md_raw))
             finally:
                 if ocr is not None:
                     del ocr
